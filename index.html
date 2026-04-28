@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LEXICON — 語彙確認テスト</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Josefin+Sans:wght@100;300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0f0608;
+    --surface:   #1a080b;
+    --card:      #200a0e;
+    --border:    #3d1018;
+    --accent:    #6b0f1a;
+    --accent2:   #8b1a26;
+    --glow:      #a02030;
+    --text:      #f5ede8;
+    --text-dim:  #a08880;
+    --text-mute: #5a3830;
+    --gold:      #c9a96e;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Josefin Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  header {
+    width: 100%;
+    max-width: 640px;
+    padding: 32px 24px 16px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 11px;
+    font-weight: 300;
+    letter-spacing: 0.5em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .tagline {
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: var(--text-mute);
+    text-transform: uppercase;
+  }
+
+  #upload-zone {
+    width: 100%;
+    max-width: 640px;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+    margin-top: 24px;
+  }
+
+  .upload-box {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    padding: 40px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .upload-box::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, transparent 40%, rgba(107,15,26,0.15) 100%);
+    pointer-events: none;
+  }
+
+  .upload-box:hover { border-color: var(--accent2); background: var(--card); }
+  .upload-icon { font-size: 32px; margin-bottom: 12px; opacity: 0.6; }
+  .upload-title { font-size: 11px; letter-spacing: 0.3em; color: var(--gold); margin-bottom: 8px; text-transform: uppercase; }
+  .upload-sub { font-size: 10px; letter-spacing: 0.15em; color: var(--text-mute); }
+  #file-input { display: none; }
+
+  #app {
+    display: none;
+    width: 100%;
+    max-width: 640px;
+    padding: 0 24px 60px;
+    position: relative;
+    z-index: 1;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* Date filter */
+  .date-filter {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    margin-bottom: 20px;
+    padding: 16px 16px 14px;
+  }
+
+  .date-filter-title {
+    font-size: 9px;
+    letter-spacing: 0.35em;
+    color: var(--text-mute);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .date-inputs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .date-inputs label {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--text-mute);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .date-inputs input[type="date"] {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 11px;
+    padding: 6px 10px;
+    outline: none;
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .date-inputs input[type="date"]:focus { border-color: var(--accent2); }
+  .date-inputs input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.5) sepia(1) saturate(2) hue-rotate(300deg);
+    cursor: pointer;
+  }
+
+  .date-sep { font-size: 10px; color: var(--text-mute); padding: 0 2px; }
+
+  .btn-apply {
+    padding: 7px 16px;
+    border: 1px solid var(--accent2);
+    background: var(--accent);
+    color: var(--text);
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 9px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .btn-apply:hover { background: var(--accent2); color: #fff; }
+
+  .date-count {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--gold);
+    margin-top: 10px;
+  }
+
+  /* Progress */
+  .progress-bar-wrap {
+    width: 100%;
+    height: 1px;
+    background: var(--border);
+    margin-bottom: 20px;
+  }
+
+  .progress-bar-fill {
+    height: 1px;
+    background: linear-gradient(90deg, var(--accent), var(--gold));
+    transition: width 0.5s ease;
+  }
+
+  .counter {
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: var(--text-mute);
+    text-align: center;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+  }
+
+  .counter span { color: var(--gold); }
+
+  /* Card */
+  .card {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 24px;
+    min-height: 300px;
+  }
+
+  .card::after {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 120px; height: 120px;
+    background: radial-gradient(circle at top right, rgba(107,15,26,0.3), transparent 70%);
+    pointer-events: none;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 24px; height: 24px;
+    border-top: 1px solid var(--accent2);
+    border-left: 1px solid var(--accent2);
+  }
+
+  .card-inner { padding: 32px 28px; }
+
+  .card-pos {
+    font-size: 9px;
+    letter-spacing: 0.4em;
+    color: var(--text-mute);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    display: block;
+  }
+
+  /* Placeholder dots (shown before answer) */
+  .card-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 140px;
+  }
+
+  .placeholder-dots { display: flex; gap: 10px; }
+
+  .placeholder-dots span {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--border);
+    animation: dotPulse 1.8s ease infinite;
+  }
+
+  .placeholder-dots span:nth-child(2) { animation-delay: 0.3s; }
+  .placeholder-dots span:nth-child(3) { animation-delay: 0.6s; }
+
+  @keyframes dotPulse {
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50%       { opacity: 0.8; transform: scale(1.3); }
+  }
+
+  /* Answer reveal */
+  .answer-area {
+    display: none;
+    animation: fadeUp 0.4s ease;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .answer-word-en {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(32px, 7vw, 48px);
+    font-weight: 300;
+    color: var(--text);
+    line-height: 1.1;
+    margin-bottom: 6px;
+  }
+
+  .answer-pron {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 14px;
+    font-style: italic;
+    color: var(--text-mute);
+    margin-bottom: 20px;
+  }
+
+  .answer-meaning {
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--text);
+    margin-bottom: 24px;
+    letter-spacing: 0.04em;
+    white-space: pre-line;
+    border-left: 2px solid var(--accent2);
+    padding-left: 14px;
+  }
+
+  .answer-example-label {
+    font-size: 9px;
+    letter-spacing: 0.35em;
+    color: var(--text-mute);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  /* Example: larger + pure white */
+  .answer-example {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 19px;
+    font-style: italic;
+    line-height: 1.75;
+    color: #ffffff;
+    letter-spacing: 0.02em;
+  }
+
+  /* Buttons */
+  .btn-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    width: 100%;
+    margin-bottom: 12px;
+  }
+
+  .btn-row-single { width: 100%; margin-bottom: 12px; }
+
+  .btn {
+    padding: 14px 12px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, transparent, rgba(255,255,255,0.03));
+    pointer-events: none;
+  }
+
+  .btn:hover { border-color: var(--accent2); background: var(--card); color: var(--gold); }
+  .btn:active { transform: scale(0.98); }
+
+  .btn-primary { background: var(--accent); border-color: var(--accent2); }
+  .btn-primary:hover { background: var(--accent2); border-color: var(--glow); color: #fff; }
+
+  .btn-listen { background: transparent; border-color: var(--gold); color: var(--gold); }
+  .btn-listen:hover { background: rgba(201,169,110,0.1); }
+  .btn-listen.active { background: rgba(201,169,110,0.15); animation: pulse-gold 2s ease infinite; }
+
+  @keyframes pulse-gold {
+    0%, 100% { box-shadow: 0 0 10px rgba(201,169,110,0.2); }
+    50%       { box-shadow: 0 0 24px rgba(201,169,110,0.4); }
+  }
+
+  /* Speaking indicator */
+  .speaking-indicator {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    background: rgba(107,15,26,0.2);
+    border: 1px solid var(--border);
+    margin-bottom: 12px;
+    width: 100%;
+  }
+
+  .speaking-indicator.visible { display: flex; }
+
+  .wave { display: flex; gap: 3px; align-items: center; }
+
+  .wave span {
+    display: block; width: 2px;
+    background: var(--gold); border-radius: 2px;
+    animation: wave 1s ease infinite;
+  }
+
+  .wave span:nth-child(1) { height: 8px;  animation-delay: 0s; }
+  .wave span:nth-child(2) { height: 14px; animation-delay: 0.1s; }
+  .wave span:nth-child(3) { height: 10px; animation-delay: 0.2s; }
+  .wave span:nth-child(4) { height: 16px; animation-delay: 0.15s; }
+  .wave span:nth-child(5) { height: 8px;  animation-delay: 0.05s; }
+
+  @keyframes wave {
+    0%, 100% { transform: scaleY(1); }
+    50%       { transform: scaleY(0.4); }
+  }
+
+  .speaking-text { font-size: 9px; letter-spacing: 0.3em; color: var(--text-mute); text-transform: uppercase; }
+
+  .divider { width: 100%; height: 1px; background: var(--border); margin: 8px 0 16px; }
+
+  .nav-row { display: flex; gap: 10px; width: 100%; }
+  .nav-row .btn { flex: 1; }
+
+  .listen-mode-badge {
+    display: none;
+    position: fixed;
+    top: 16px; right: 16px;
+    background: rgba(107,15,26,0.9);
+    border: 1px solid var(--accent2);
+    padding: 6px 12px;
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: var(--gold);
+    text-transform: uppercase;
+    z-index: 100;
+    animation: pulse-gold 2s ease infinite;
+  }
+
+  .listen-mode-badge.visible { display: block; }
+</style>
+</head>
+<body>
+
+<div class="listen-mode-badge" id="listen-badge">● 聞き流し中</div>
+
+<header>
+  <div class="logo">Lexicon</div>
+  <div class="tagline">Vocabulary Training System</div>
+</header>
+
+<div id="upload-zone">
+  <div class="upload-box" onclick="document.getElementById('file-input').click()">
+    <div class="upload-icon">📂</div>
+    <div class="upload-title">スプレッドシートをアップロード</div>
+    <div class="upload-sub">.xlsx ファイルをタップして選択</div>
+  </div>
+  <input type="file" id="file-input" accept=".xlsx" onchange="handleFile(event)">
+</div>
+
+<div id="app">
+
+  <!-- Date filter -->
+  <div class="date-filter">
+    <div class="date-filter-title">学習期間を指定</div>
+    <div class="date-inputs">
+      <label>From</label>
+      <input type="date" id="date-from" min="2026-04-20">
+      <span class="date-sep">—</span>
+      <label>To</label>
+      <input type="date" id="date-to">
+      <button class="btn-apply" onclick="applyFilter()">適用</button>
+    </div>
+    <div class="date-count" id="date-count"></div>
+  </div>
+
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+  </div>
+
+  <div class="counter">
+    <span id="current-num">1</span> / <span id="total-num">—</span>
+  </div>
+
+  <div class="card">
+    <div class="card-inner">
+      <span class="card-pos" id="card-pos">—</span>
+
+      <div class="card-placeholder" id="card-placeholder">
+        <div class="placeholder-dots">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+
+      <div class="answer-area" id="answer-area">
+        <div class="answer-word-en" id="ans-word">—</div>
+        <div class="answer-pron" id="ans-pron">—</div>
+        <div class="answer-meaning" id="ans-meaning">—</div>
+        <div class="answer-example-label">Example</div>
+        <div class="answer-example" id="ans-example">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="speaking-indicator" id="speaking-indicator">
+    <div class="wave">
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <div class="speaking-text" id="speaking-text">読み上げ中...</div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="speak()">🔊 出題</button>
+    <button class="btn" onclick="showAnswer()">📖 回答</button>
+  </div>
+
+  <div class="btn-row-single">
+    <button class="btn btn-listen" id="listen-btn" onclick="toggleListening()">▶ 聞き流し</button>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="nav-row">
+    <button class="btn" onclick="prevCard()">← 前へ</button>
+    <button class="btn" onclick="nextCard()">次へ →</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+let allWords     = [];
+let words        = [];
+let currentIndex = 0;
+let isListening  = false;
+let listenTimeout = null;
+let isSpeaking   = false;
+
+function handleFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data  = new Uint8Array(e.target.result);
+      const wb    = XLSX.read(data, { type: 'array' });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const rows  = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+      allWords = [];
+      let minDate = null, maxDate = null;
+
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || !row[1]) continue;
+        const bRaw  = String(row[1] || '');
+        const lines = bRaw.split('\n');
+        const word  = lines[0] ? lines[0].trim() : '';
+        const pronR = lines[1] ? lines[1].trim() : '';
+        const pron  = pronR.replace(/[\[\]]/g, '').trim();
+        const pos   = lines[2] ? lines[2].trim() : '';
+        const meaning = String(row[2] || '').trim();
+        const example = String(row[3] || '').trim();
+        const dateStr = String(row[0] || '').trim();
+
+        if (word) {
+          allWords.push({ word, pron, pos, meaning, example, dateStr });
+          if (!minDate || dateStr < minDate) minDate = dateStr;
+          if (!maxDate || dateStr > maxDate) maxDate = dateStr;
+        }
+      }
+
+      if (allWords.length === 0) { alert('単語データが見つかりませんでした。'); return; }
+
+      document.getElementById('date-from').value = '2026-04-20';
+      if (maxDate) document.getElementById('date-to').value   = maxDate.replace(/\//g, '-');
+
+      document.getElementById('upload-zone').style.display = 'none';
+      document.getElementById('app').style.display = 'flex';
+
+      applyFilter();
+    } catch(err) {
+      alert('読み込みエラー: ' + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function applyFilter() {
+  const fromVal = document.getElementById('date-from').value;
+  const toVal   = document.getElementById('date-to').value;
+  const fromStr = fromVal ? fromVal.replace(/-/g, '/') : null;
+  const toStr   = toVal   ? toVal.replace(/-/g, '/')   : null;
+
+  const filtered = allWords.filter(w => {
+    if (fromStr && w.dateStr < fromStr) return false;
+    if (toStr   && w.dateStr > toStr)   return false;
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    document.getElementById('date-count').textContent = '該当する単語がありません。';
+    return;
+  }
+
+  words = shuffle(filtered);
+  currentIndex = 0;
+  document.getElementById('date-count').textContent = `${words.length} 単語が対象です`;
+
+  stopListening();
+  updateCard();
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function updateCard() {
+  const w = words[currentIndex];
+  document.getElementById('card-pos').textContent    = w.pos || '—';
+  document.getElementById('card-placeholder').style.display = 'flex';
+  document.getElementById('answer-area').style.display = 'none';
+  document.getElementById('ans-word').textContent    = w.word;
+  document.getElementById('ans-pron').textContent    = w.pron ? `[${w.pron}]` : '';
+  document.getElementById('ans-meaning').textContent = w.meaning;
+  document.getElementById('ans-example').textContent = w.example;
+
+  const total = words.length;
+  document.getElementById('current-num').textContent = currentIndex + 1;
+  document.getElementById('total-num').textContent   = total;
+  document.getElementById('progress-fill').style.width = ((currentIndex + 1) / total * 100) + '%';
+}
+
+function showAnswer() {
+  document.getElementById('card-placeholder').style.display = 'none';
+  document.getElementById('answer-area').style.display = 'block';
+}
+
+function nextCard() {
+  if (currentIndex < words.length - 1) currentIndex++;
+  else currentIndex = 0;
+  updateCard();
+  speak();
+}
+
+function prevCard() {
+  if (currentIndex > 0) currentIndex--;
+  else currentIndex = words.length - 1;
+  updateCard();
+  speak();
+}
+
+function speakText(text, rate, onEnd) {
+  if (!window.speechSynthesis) { if (onEnd) onEnd(); return; }
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang  = 'en-US';
+  utter.rate  = rate || 0.85;
+  utter.pitch = 1.0;
+  document.getElementById('speaking-indicator').classList.add('visible');
+  document.getElementById('speaking-text').textContent =
+    text.length > 30 ? '例文を読み上げ中...' : '単語を読み上げ中...';
+  isSpeaking = true;
+  utter.onend = utter.onerror = () => {
+    isSpeaking = false;
+    document.getElementById('speaking-indicator').classList.remove('visible');
+    if (onEnd) onEnd();
+  };
+  window.speechSynthesis.speak(utter);
+}
+
+function speak() {
+  if (isSpeaking) { window.speechSynthesis.cancel(); isSpeaking = false; return; }
+  const w = words[currentIndex];
+  speakText(w.word, 0.8, () => {
+    listenTimeout = setTimeout(() => {
+      speakText(w.example, 0.82, null);
+    }, 600);
+  });
+}
+
+function toggleListening() { isListening ? stopListening() : startListening(); }
+
+function startListening() {
+  isListening = true;
+  document.getElementById('listen-btn').textContent = '■ 停止';
+  document.getElementById('listen-btn').classList.add('active');
+  document.getElementById('listen-badge').classList.add('visible');
+  listenNext();
+}
+
+function stopListening() {
+  isListening = false;
+  if (listenTimeout) clearTimeout(listenTimeout);
+  window.speechSynthesis.cancel();
+  isSpeaking = false;
+  document.getElementById('listen-btn').textContent = '▶ 聞き流し';
+  document.getElementById('listen-btn').classList.remove('active');
+  document.getElementById('listen-badge').classList.remove('visible');
+  document.getElementById('speaking-indicator').classList.remove('visible');
+}
+
+function listenNext() {
+  if (!isListening) return;
+  updateCard();
+  const w = words[currentIndex];
+  speakText(w.word, 0.8, () => {
+    if (!isListening) return;
+    listenTimeout = setTimeout(() => {
+      if (!isListening) return;
+      speakText(w.example, 0.82, () => {
+        if (!isListening) return;
+        listenTimeout = setTimeout(() => {
+          if (!isListening) return;
+          currentIndex = (currentIndex < words.length - 1) ? currentIndex + 1 : 0;
+          listenNext();
+        }, 1200);
+      });
+    }, 500);
+  });
+}
+</script>
+</body>
+</html>
